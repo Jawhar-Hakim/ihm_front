@@ -37,7 +37,7 @@ const Index: React.FC = () => {
       <section className="gradient-hero text-primary-foreground py-24 lg:py-32">
         <div className="container mx-auto px-6 lg:px-12 text-center max-w-4xl">
           <h1 className="font-heading text-4xl lg:text-6xl font-bold mb-6 leading-tight">
-            Find Your Next <span className="text-accent">Opportunity</span>
+             <span className="text-accent">HireFlow</span>
           </h1>
           <p className="text-lg lg:text-xl opacity-80 mb-10 max-w-2xl mx-auto">
             Connect talented candidates with top companies. Search, apply, and hire — all in one platform.

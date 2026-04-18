@@ -1,133 +1,104 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  LayoutDashboard, User, Search, FileText, Building2, Briefcase, Users,
-  FolderTree, LogOut, Menu, X, ChevronRight
-} from 'lucide-react';
-
-interface NavItem {
-  label: string;
-  path: string;
-  icon: React.ReactNode;
-}
-
-const NAV_ITEMS: Record<string, NavItem[]> = {
-  candidate: [
-    { label: 'Dashboard', path: '/candidate', icon: <LayoutDashboard size={20} /> },
-    { label: 'My Profile', path: '/candidate/profile', icon: <User size={20} /> },
-    { label: 'Search Jobs', path: '/candidate/jobs', icon: <Search size={20} /> },
-    { label: 'My Applications', path: '/candidate/applications', icon: <FileText size={20} /> },
-  ],
-  company: [
-    { label: 'Dashboard', path: '/company', icon: <LayoutDashboard size={20} /> },
-    { label: 'Job Offers', path: '/company/offers', icon: <Briefcase size={20} /> },
-    { label: 'Candidates', path: '/company/candidates', icon: <Users size={20} /> },
-  ],
-  admin: [
-    { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
-    { label: 'Accounts', path: '/admin/accounts', icon: <Users size={20} /> },
-    { label: 'Categories', path: '/admin/categories', icon: <FolderTree size={20} /> },
-  ],
-};
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Briefcase, User, FileText, LogOut } from 'lucide-react';
 
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const role = user?.role || 'candidate';
-  const items = NAV_ITEMS[role] || [];
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  const roleLabel = role === 'candidate' ? 'Candidate' : role === 'company' ? 'Company' : 'Admin';
-
   return (
-    <div className="flex min-h-screen">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex items-center justify-between p-5 border-b border-sidebar-border">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <Briefcase size={18} className="text-primary-foreground" />
-            </div>
-            <span className="font-heading font-bold text-lg">HireFlow</span>
-          </Link>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-sidebar-foreground/60 hover:text-sidebar-foreground">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="px-4 py-3">
-          <div className="text-xs uppercase tracking-wider text-sidebar-foreground/40 font-medium">{roleLabel} Panel</div>
-        </div>
-
-        <nav className="flex-1 px-3 space-y-1">
-          {items.map(item => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-primary'
-                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                }`}
-              >
-                {item.icon}
-                {item.label}
-                {isActive && <ChevronRight size={16} className="ml-auto" />}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center gap-3 mb-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-bold">
-              {user?.email?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">{user?.email}</div>
-              <div className="text-xs text-sidebar-foreground/50 capitalize">{role}</div>
-            </div>
+    <div className="min-h-screen bg-muted/30 flex flex-col">
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-6 md:gap-10">
+            <Link to="/candidate" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+                <Briefcase size={18} className="text-primary-foreground" />
+              </div>
+              <span className="font-heading font-bold text-lg hidden sm:inline-block">HireFlow</span>
+            </Link>
           </div>
-          <Button variant="ghost" size="sm" className="w-full justify-start text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent" onClick={handleLogout}>
-            <LogOut size={16} className="mr-2" /> Sign Out
-          </Button>
-        </div>
-      </aside>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b flex items-center justify-between px-4 lg:px-8 bg-card">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-muted">
-            <Menu size={20} />
-          </button>
-          <div className="font-heading font-semibold text-lg hidden lg:block">
-            {items.find(i => i.path === location.pathname)?.label || 'Dashboard'}
+          <div className="flex flex-1 items-center justify-end gap-4 space-x-2 sm:space-x-4">
+            <div className="w-full flex-1 md:w-auto md:flex-none">
+              <div className="relative max-w-sm ml-auto">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search jobs..."
+                  className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px] rounded-full bg-muted/50"
+                  onChange={(e) => {
+                    // Search functionality could trigger context/state or navigate to search page
+                  }}
+                />
+              </div>
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                      {user?.email?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.role}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/candidate/profile" className="cursor-pointer flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>My Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/candidate/applications" className="cursor-pointer flex items-center">
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>My Applications</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
-          </div>
-        </header>
-        <main className="flex-1 p-4 lg:p-8 overflow-auto">
-          {children}
-        </main>
-      </div>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="flex-1 container mx-auto py-8 px-4">
+        {children}
+      </main>
     </div>
   );
 };

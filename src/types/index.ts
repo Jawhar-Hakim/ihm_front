@@ -19,8 +19,10 @@ export interface Candidate {
   government?: string;
   category?: string;
   diplomas: string[];
-  cvUrl?: string;
+  cvUrl?: string; // We'll store the base64 pdf string here
   portfolioUrl?: string;
+  description?: string;
+  experienceYears?: string;
 }
 
 export interface Company {
