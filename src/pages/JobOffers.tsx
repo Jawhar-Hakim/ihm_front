@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Globe, Clock, ArrowLeft, Loader2, X, Info, CheckCircle } from 'lucide-react';
@@ -16,6 +16,10 @@ const JobOffers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
   const [applying, setApplying] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDomain, setSelectedDomain] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState('');
 
   useEffect(() => {
     jobsService.getAll()
@@ -23,6 +27,47 @@ const JobOffers: React.FC = () => {
       .catch(() => toast({ title: 'Error', description: 'Failed to load job offers', variant: 'destructive' }))
       .finally(() => setLoading(false));
   }, [toast]);
+
+  const getDateKey = (job: JobOffer) => {
+    const rawDate = job.createdAt || (job as any).datePublication;
+    if (!rawDate) return '';
+    const parsedDate = new Date(rawDate);
+    if (Number.isNaN(parsedDate.getTime())) return '';
+    return parsedDate.toISOString().slice(0, 10);
+  };
+
+  const domainOptions = useMemo(() => {
+    return [...new Set(jobOffers.map(job => job.domain || (job as any).domaine).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }, [jobOffers]);
+
+  const companyOptions = useMemo(() => {
+    return [...new Set(jobOffers.map(job => job.companyName || (job as any).societe?.nom || 'Company').filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }, [jobOffers]);
+
+  const filteredJobOffers = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return jobOffers.filter((job) => {
+      const title = (job.title || (job as any).titre || '').toLowerCase();
+      const description = (job.description || (job as any).description || '').toLowerCase();
+      const domain = (job.domain || (job as any).domaine || '').toLowerCase();
+      const specialty = (job.specialty || (job as any).specialiteName || '').toLowerCase();
+      const company = (job.companyName || (job as any).societe?.nom || 'Company').toLowerCase();
+
+      const matchesSearch = !normalizedSearch
+        || title.includes(normalizedSearch)
+        || description.includes(normalizedSearch)
+        || domain.includes(normalizedSearch)
+        || specialty.includes(normalizedSearch)
+        || company.includes(normalizedSearch);
+
+      const matchesDate = !selectedDate || getDateKey(job) === selectedDate;
+      const matchesDomain = !selectedDomain || (job.domain || (job as any).domaine) === selectedDomain;
+      const matchesCompany = !selectedCompany || (job.companyName || (job as any).societe?.nom || 'Company') === selectedCompany;
+
+      return matchesSearch && matchesDate && matchesDomain && matchesCompany;
+    });
+  }, [jobOffers, searchTerm, selectedDate, selectedDomain, selectedCompany]);
 
   const handleApply = async () => {
     if (!user?.id) {
@@ -76,11 +121,68 @@ const JobOffers: React.FC = () => {
           </div>
         ) : jobOffers.length > 0 ? (
           <>
+            <div className="mb-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search jobs..."
+                  className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                <select
+                  value={selectedDomain}
+                  onChange={(e) => setSelectedDomain(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All domains</option>
+                  {domainOptions.map((domain) => (
+                    <option key={domain} value={domain}>{domain}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={selectedCompany}
+                  onChange={(e) => setSelectedCompany(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All companies</option>
+                  {companyOptions.map((company) => (
+                    <option key={company} value={company}>{company}</option>
+                  ))}
+                </select>
+              </div>
+
+              {(searchTerm || selectedDate || selectedDomain || selectedCompany) && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedDate('');
+                      setSelectedDomain('');
+                      setSelectedCompany('');
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                  >
+                    <X size={13} /> Clear filters
+                  </button>
+                </div>
+              )}
+            </div>
+
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-5 tracking-wide uppercase">
-              {jobOffers.length} positions available
+              {filteredJobOffers.length} of {jobOffers.length} positions available
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {jobOffers.map((job) => (
+              {filteredJobOffers.map((job) => (
                 <div
                   key={job.id}
                   className="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-600 transition-colors duration-200 flex flex-col overflow-hidden"
@@ -147,6 +249,12 @@ const JobOffers: React.FC = () => {
                 </div>
               ))}
             </div>
+
+            {filteredJobOffers.length === 0 && (
+              <div className="text-center py-16 border border-dashed border-gray-200 dark:border-slate-800 rounded-xl mt-5">
+                <p className="text-sm text-gray-400">No offers match your filters.</p>
+              </div>
+            )}
           </>
         ) : (
           <div className="text-center py-16 border border-dashed border-gray-200 dark:border-slate-800 rounded-xl">

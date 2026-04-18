@@ -93,20 +93,8 @@ const Index: React.FC = () => {
             hire — all in one platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-<<<<<<< HEAD
             <Button size="lg" variant="secondary" asChild className="text-base px-8">
               <Link to="/jobs"><Search size={18} className="mr-2" /> I'm Looking for a Job</Link>
-=======
-            <Button
-              size="lg"
-              variant="secondary"
-              asChild
-              className="text-base px-8"
-            >
-              <Link to="/register?role=candidate">
-                <Search size={18} className="mr-2" /> I'm Looking for a Job
-              </Link>
->>>>>>> 42937bba8c8479cd5116d92bd53ff12425f3434d
             </Button>
             <Button
               size="lg"
