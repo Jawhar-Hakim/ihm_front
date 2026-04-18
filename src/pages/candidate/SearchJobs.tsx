@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, MapPin, Briefcase } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
+import { candidatesService } from '@/services/candidates.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { JobOffer } from '@/types';
@@ -14,6 +15,8 @@ const SearchJobs: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<JobOffer[]>([]);
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+  const [candidateId, setCandidateId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState<string | null>(null);
 
@@ -24,18 +27,39 @@ const SearchJobs: React.FC = () => {
   const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
-    jobsService.getAll()
-      .then(data => setJobs(data))
-      .catch(() => toast({ title: 'Error', description: 'Failed to load jobs', variant: 'destructive' }))
-      .finally(() => setLoading(false));
-  }, [toast]);
+    const fetchData = async () => {
+      try {
+        const jobsData = await jobsService.getAll();
+        setJobs(jobsData);
+        
+        if (user?.id) {
+          const profile = await candidatesService.getProfile(user.id).catch(() => null);
+          if (profile) setCandidateId(profile.id);
+
+          const appsData = await candidatesService.getApplications(user.id);
+          const appliedIds = new Set(Array.isArray(appsData) ? appsData.map(app => app.jobOfferId) : []);
+          setAppliedJobIds(appliedIds);
+        }
+      } catch (err) {
+        toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [toast, user?.id]);
 
   const handleApply = async (jobId: string, e: React.MouseEvent) => {
     e.preventDefault();
-    if (!user?.id) return;
+    if (!candidateId) {
+      toast({ title: 'Profile required', description: 'Please complete your profile to apply.', variant: 'destructive' });
+      return;
+    }
     setApplying(jobId);
     try {
-      await jobsService.apply(jobId, { candidateId: user.id });
+      await jobsService.apply(jobId, { candidateId });
+      setAppliedJobIds(prev => new Set(prev).add(jobId));
       toast({ title: 'Success', description: 'Application submitted successfully!' });
     } catch (err: any) {
       toast({ title: 'Error', description: err.response?.data?.message || err.message || 'Failed to apply', variant: 'destructive' });
@@ -194,15 +218,26 @@ const SearchJobs: React.FC = () => {
                       </span>
                     )}
                     
-                    <Button 
-                      size="sm" 
-                      onClick={(e) => handleApply(job.id, e)} 
-                      disabled={applying === job.id}
-                      className="rounded-full shadow-sm shrink-0 ml-auto md:ml-0"
-                    >
-                      {applying === job.id ? <Loader2 className="animate-spin mr-1 h-3 w-3" /> : null}
-                      {applying === job.id ? '...' : 'Apply'}
-                    </Button>
+                    {appliedJobIds.has(job.id) ? (
+                      <Button 
+                        size="sm" 
+                        disabled
+                        variant="secondary"
+                        className="rounded-full shadow-sm shrink-0 ml-auto md:ml-0 hover:bg-secondary"
+                      >
+                        Applied
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        onClick={(e) => handleApply(job.id, e)} 
+                        disabled={applying === job.id}
+                        className="rounded-full shadow-sm shrink-0 ml-auto md:ml-0"
+                      >
+                        {applying === job.id && <Loader2 className="animate-spin mr-1 h-3 w-3" />}
+                        {applying === job.id ? 'Applying...' : 'Apply'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
