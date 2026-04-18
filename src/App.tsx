@@ -44,7 +44,7 @@ const App = () => (
             <Route path="/jobs/:id" element={<JobDetails />} />
 
             {/* Candidate routes */}
-            <Route path="/candidate" element={<ProtectedRoute allowedRoles={['candidate']}><DashboardLayout><CandidateDashboard /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/candidate" element={<ProtectedRoute allowedRoles={['candidate']}><DashboardLayout><SearchJobs /></DashboardLayout></ProtectedRoute>} />
             <Route path="/candidate/profile" element={<ProtectedRoute allowedRoles={['candidate']}><DashboardLayout><CandidateProfile /></DashboardLayout></ProtectedRoute>} />
             <Route path="/candidate/jobs" element={<ProtectedRoute allowedRoles={['candidate']}><DashboardLayout><SearchJobs /></DashboardLayout></ProtectedRoute>} />
             <Route path="/candidate/applications" element={<ProtectedRoute allowedRoles={['candidate']}><DashboardLayout><Applications /></DashboardLayout></ProtectedRoute>} />
