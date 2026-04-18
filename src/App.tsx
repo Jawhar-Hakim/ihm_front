@@ -11,6 +11,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import JobOffers from "./pages/JobOffers";
+import JobDetails from "./pages/JobDetails";
 
 import CandidateDashboard from "./pages/candidate/CandidateDashboard";
 import CandidateProfile from "./pages/candidate/CandidateProfile";
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/jobs" element={<JobOffers />} />
+            <Route path="/jobs/:id" element={<JobDetails />} />
 
             {/* Candidate routes */}
             <Route path="/candidate" element={<ProtectedRoute allowedRoles={['candidate']}><DashboardLayout><CandidateDashboard /></DashboardLayout></ProtectedRoute>} />

@@ -44,7 +44,7 @@ const Index: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" asChild className="text-base px-8">
-              <Link to="/register?role=candidate"><Search size={18} className="mr-2" /> I'm Looking for a Job</Link>
+              <Link to="/jobs"><Search size={18} className="mr-2" /> I'm Looking for a Job</Link>
             </Button>
             <Button size="lg" asChild className="text-base px-8 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
               <Link to="/register?role=company"><Building2 size={18} className="mr-2" /> I'm Hiring</Link>

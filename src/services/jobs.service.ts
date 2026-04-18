@@ -21,11 +21,13 @@ export const jobsService = {
       companyName: item.societe?.nom || 'Company',
       title: item.titre,
       description: item.description,
+      detailsOffre: item.detailsOffre,
       domain: item.domaine,
       specialty: item.specialiteName,
+      workMode: item.type || item.workMode || item.contractType,
       createdAt: item.datePublication || item.createdAt,
       isActive: true,
-    } as JobOffer));
+    } as any));
   },
 
   getById: async (id: string) => {
@@ -36,11 +38,13 @@ export const jobsService = {
       companyName: item.societe?.nom || 'Company',
       title: item.titre,
       description: item.description,
+      detailsOffre: item.detailsOffre,
       domain: item.domaine,
       specialty: item.specialiteName,
+      workMode: item.type || item.workMode || item.contractType,
       createdAt: item.datePublication || item.createdAt,
       isActive: true,
-    } as JobOffer;
+    } as any;
   },
 
   create: (data: Partial<JobOffer>) => api.post<JobOffer>('/offres-emploi', {

@@ -40,6 +40,7 @@ export interface JobOffer {
   companyName?: string;
   title: string;
   description: string;
+  detailsOffre?: string;
   domain: string;
   specialty: string;
   contractType?: string;
