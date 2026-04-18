@@ -18,6 +18,7 @@ const JobOffers: React.FC = () => {
   const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
   const [applying, setApplying] = useState(false);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+  const [candidateId, setCandidateId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('');
@@ -37,6 +38,9 @@ const JobOffers: React.FC = () => {
               Array.isArray(appsData) ? appsData.map((app: any) => app.jobOfferId || app.offre_emploi?._id) : []
             );
             setAppliedJobIds(appliedIds);
+
+            const profile = await candidatesService.getProfile(userId).catch(() => null);
+            if (profile) setCandidateId(profile.id || profile._id);
           } catch (e) {
             console.error("Failed to load applications", e);
           }
@@ -97,11 +101,15 @@ const JobOffers: React.FC = () => {
       navigate('/register?role=candidate');
       return;
     }
+    if (!candidateId) {
+      toast({ title: 'Profile required', description: 'Please complete your profile to apply.', variant: 'destructive' });
+      return;
+    }
     if (!selectedJob) return;
     setApplying(true);
     try {
       const jobId = selectedJob.id || (selectedJob as any)._id;
-      await jobsService.apply(jobId, { candidateId: userId });
+      await jobsService.apply(jobId, { candidateId });
       setAppliedJobIds(prev => new Set(prev).add(jobId));
       toast({ title: 'Success', description: 'Application submitted successfully!' });
       setSelectedJob(null);

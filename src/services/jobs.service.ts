@@ -51,13 +51,15 @@ export const jobsService = {
     titre: data.title,
     description: data.description,
     societe: data.companyId,
-    specialite: data.specialty,
-    categorie: data.domain,
+    specialite: data.specialty, // Must be ID
+    categorie: data.domain, // Must be ID
   }),
 
   update: (id: string, data: Partial<JobOffer>) => api.patch<JobOffer>(`/offres-emploi/${id}`, {
     titre: data.title,
     description: data.description,
+    specialite: data.specialty, // Must be ID
+    categorie: data.domain, // Must be ID
   }),
 
   delete: (id: string) => api.delete(`/offres-emploi/${id}`),

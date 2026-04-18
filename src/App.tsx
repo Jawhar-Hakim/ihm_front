@@ -23,10 +23,6 @@ import CompanyDashboard from "./pages/company/CompanyDashboard";
 import ManageOffers from "./pages/company/ManageOffers";
 import ViewCandidates from "./pages/company/ViewCandidates";
 
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import ManageAccounts from "./pages/admin/ManageAccounts";
-import ManageCategories from "./pages/admin/ManageCategories";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -53,11 +49,6 @@ const App = () => (
             <Route path="/company" element={<ProtectedRoute allowedRoles={['company']}><DashboardLayout><CompanyDashboard /></DashboardLayout></ProtectedRoute>} />
             <Route path="/company/offers" element={<ProtectedRoute allowedRoles={['company']}><DashboardLayout><ManageOffers /></DashboardLayout></ProtectedRoute>} />
             <Route path="/company/candidates" element={<ProtectedRoute allowedRoles={['company']}><DashboardLayout><ViewCandidates /></DashboardLayout></ProtectedRoute>} />
-
-            {/* Admin routes */}
-            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><DashboardLayout><AdminDashboard /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={['admin']}><DashboardLayout><ManageAccounts /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['admin']}><DashboardLayout><ManageCategories /></DashboardLayout></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

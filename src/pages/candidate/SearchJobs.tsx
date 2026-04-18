@@ -32,13 +32,20 @@ const SearchJobs: React.FC = () => {
         const jobsData = await jobsService.getAll();
         setJobs(jobsData);
         
-        if (user?.id) {
-          const profile = await candidatesService.getProfile(user.id).catch(() => null);
-          if (profile) setCandidateId(profile.id);
-
-          const appsData = await candidatesService.getApplications(user.id);
-          const appliedIds = new Set(Array.isArray(appsData) ? appsData.map(app => app.jobOfferId) : []);
-          setAppliedJobIds(appliedIds);
+        const userId = user?.id || (user as any)?._id;
+        if (userId) {
+          try {
+            const appsData = await candidatesService.getApplications(userId);
+            const appliedIds = new Set(
+              Array.isArray(appsData) ? appsData.map((app: any) => app.jobOfferId || app.offre_emploi?._id) : []
+            );
+            setAppliedJobIds(appliedIds);
+            
+            const profile = await candidatesService.getProfile(userId).catch(() => null);
+            if (profile) setCandidateId(profile.id || profile._id);
+          } catch (e) {
+            console.error("Failed to fetch applications or profile", e);
+          }
         }
       } catch (err) {
         toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' });
@@ -48,7 +55,7 @@ const SearchJobs: React.FC = () => {
     };
     
     fetchData();
-  }, [toast, user?.id]);
+  }, [toast, user]);
 
   const handleApply = async (jobId: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -228,24 +235,24 @@ const SearchJobs: React.FC = () => {
                       </span>
                     )}
                     
-                    {appliedJobIds.has(job.id) ? (
+                    {appliedJobIds.has(job.id) || appliedJobIds.has((job as any)._id) ? (
                       <Button 
                         size="sm" 
                         disabled
                         variant="secondary"
                         className="rounded-full shadow-sm shrink-0 ml-auto md:ml-0 hover:bg-secondary"
                       >
-                        Applied
+                        Applied ✅
                       </Button>
                     ) : (
                       <Button 
                         size="sm" 
-                        onClick={(e) => handleApply(job.id, e)} 
-                        disabled={applying === job.id}
+                        onClick={(e) => handleApply(job.id || (job as any)._id, e)} 
+                        disabled={applying === (job.id || (job as any)._id)}
                         className="rounded-full shadow-sm shrink-0 ml-auto md:ml-0"
                       >
-                        {applying === job.id && <Loader2 className="animate-spin mr-1 h-3 w-3" />}
-                        {applying === job.id ? 'Applying...' : 'Apply'}
+                        {applying === (job.id || (job as any)._id) && <Loader2 className="animate-spin mr-1 h-3 w-3" />}
+                        {applying === (job.id || (job as any)._id) ? 'Applying...' : 'Apply Now'}
                       </Button>
                     )}
                   </div>
