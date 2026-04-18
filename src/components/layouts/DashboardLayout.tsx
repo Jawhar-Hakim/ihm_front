@@ -29,7 +29,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-6 md:gap-10">
-            <Link to="/candidate" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
                 <Briefcase size={18} className="text-primary-foreground" />
               </div>

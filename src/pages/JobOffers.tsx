@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Globe, Clock, ArrowLeft, Loader2, X, Info, CheckCircle } from 'lucide-react';
+import { Briefcase, Globe, Clock, ArrowLeft, Loader2, X, Info, CheckCircle, LayoutDashboard } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { jobsService } from '@/services/jobs.service';
+import { candidatesService } from '@/services/candidates.service';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import type { JobOffer } from '@/types';
@@ -16,17 +17,38 @@ const JobOffers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
   const [applying, setApplying] = useState(false);
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
 
   useEffect(() => {
-    jobsService.getAll()
-      .then(data => setJobOffers(data))
-      .catch(() => toast({ title: 'Error', description: 'Failed to load job offers', variant: 'destructive' }))
-      .finally(() => setLoading(false));
-  }, [toast]);
+    const fetchData = async () => {
+      try {
+        const jobsData = await jobsService.getAll();
+        setJobOffers(jobsData);
+        
+        const userId = user?.id || (user as any)?._id;
+        if (userId) {
+          try {
+            const appsData = await candidatesService.getApplications(userId);
+            const appliedIds = new Set(
+              Array.isArray(appsData) ? appsData.map((app: any) => app.jobOfferId || app.offre_emploi?._id) : []
+            );
+            setAppliedJobIds(appliedIds);
+          } catch (e) {
+            console.error("Failed to load applications", e);
+          }
+        }
+      } catch (e) {
+        toast({ title: 'Error', description: 'Failed to load job offers', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [toast, user]);
 
   const getDateKey = (job: JobOffer) => {
     const rawDate = job.createdAt || (job as any).datePublication;
@@ -70,7 +92,8 @@ const JobOffers: React.FC = () => {
   }, [jobOffers, searchTerm, selectedDate, selectedDomain, selectedCompany]);
 
   const handleApply = async () => {
-    if (!user?.id) {
+    const userId = user?.id || (user as any)?._id;
+    if (!userId) {
       navigate('/register?role=candidate');
       return;
     }
@@ -78,7 +101,8 @@ const JobOffers: React.FC = () => {
     setApplying(true);
     try {
       const jobId = selectedJob.id || (selectedJob as any)._id;
-      await jobsService.apply(jobId, { candidateId: user.id || (user as any)._id });
+      await jobsService.apply(jobId, { candidateId: userId });
+      setAppliedJobIds(prev => new Set(prev).add(jobId));
       toast({ title: 'Success', description: 'Application submitted successfully!' });
       setSelectedJob(null);
     } catch (err: any) {
@@ -93,7 +117,7 @@ const JobOffers: React.FC = () => {
 
       {/* Header */}
       <div className="border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-20">
-        <div className="container mx-auto px-6 lg:px-12 py-5">
+        <div className="container mx-auto px-6 lg:px-12 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link to="/">
               <Button variant="outline" size="icon" className="border-gray-300 dark:border-slate-700">
@@ -110,6 +134,14 @@ const JobOffers: React.FC = () => {
               </p>
             </div>
           </div>
+          {user && (
+            <Link to={`/${user.role}`}>
+              <Button variant="default" className="flex items-center gap-2">
+                <LayoutDashboard size={18} />
+                Dashboard
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -235,15 +267,25 @@ const JobOffers: React.FC = () => {
                       >
                         Details
                       </button>
-                      <Link
-                        to="/register?role=candidate"
-                        className="flex-1 py-2 text-xs font-medium rounded-lg text-center text-[#e8f4f1] transition-colors"
-                        style={{ background: 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'linear-gradient(135deg, #1a4a80 0%, #1a6b62 100%)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)')}
-                      >
-                        Apply Now
-                      </Link>
+
+                      {appliedJobIds.has(job.id || (job as any)._id) ? (
+                        <button
+                          disabled
+                          className="flex-1 py-2 text-xs font-medium rounded-lg text-center bg-gray-200 text-gray-500 cursor-not-allowed flex items-center justify-center gap-1"
+                        >
+                          Applied <CheckCircle size={14} className="inline-block" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedJob(job)}
+                          className="flex-1 py-2 text-xs font-medium rounded-lg text-center text-[#e8f4f1] transition-colors"
+                          style={{ background: 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'linear-gradient(135deg, #1a4a80 0%, #1a6b62 100%)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)')}
+                        >
+                          Apply Now
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -107,59 +107,69 @@ const SearchJobs: React.FC = () => {
           Find your next dream role tailored to your skills and preferences.
         </p>
 
-        {/* Search Bar */}
-        <div className="flex flex-col md:flex-row w-full max-w-3xl mx-auto bg-transparent md:bg-white rounded-lg md:rounded-full md:p-1 overflow-hidden md:border-2 border-white/20 gap-2 md:gap-0">
-          <div className="relative flex-1 bg-white rounded-lg md:rounded-none overflow-hidden">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
-            <Input 
-              placeholder="Search jobs by title, organization, or keyword..." 
-              className="pl-12 h-14 text-base border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-foreground bg-white w-full rounded-none"
-              value={keyword}
-              onChange={e => setKeyword(e.target.value)}
-            />
-          </div>
-          <Button 
-            className="md:rounded-full rounded-lg h-14 px-10 text-lg bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold shrink-0 w-full md:w-auto"
-            onClick={() => {}}
-          >
-            Search
-          </Button>
-        </div>
       </div>
 
       {/* Main Content */}
       <div className="w-full max-w-5xl px-4 py-8 mx-auto -mt-6 rounded-t-3xl bg-background relative z-10">
         
-        {/* Filters Row */}
-        <div className="flex flex-wrap items-center gap-3 mb-10 pb-8 border-b border-border/50 justify-center sm:justify-start">
-          <select 
-            className="h-10 px-4 py-2 border rounded-full text-sm bg-background text-foreground/80 hover:bg-muted/50 cursor-pointer outline-none focus:ring-2 focus:ring-primary"
-            value={domainFilter} 
-            onChange={(e) => setDomainFilter(e.target.value)}
-          >
-            <option value="">Domain</option>
-            {domains.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-          
-          <select 
-            className="h-10 px-4 py-2 border rounded-full text-sm bg-background text-foreground/80 hover:bg-muted/50 cursor-pointer outline-none focus:ring-2 focus:ring-primary"
-            value={specialtyFilter} 
-            onChange={(e) => setSpecialtyFilter(e.target.value)}
-          >
-            <option value="">Specialty</option>
-            {specialties.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+        {/* Search Menu */}
+        <div className="mb-8 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <input
+              type="text"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="Search jobs..."
+              className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
 
-          <select 
-            className="h-10 px-4 py-2 border rounded-full text-sm bg-background text-foreground/80 hover:bg-muted/50 cursor-pointer outline-none focus:ring-2 focus:ring-primary"
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="newest">Most Recent</option>
-            <option value="oldest">Oldest First</option>
-          </select>
+            <select
+              value={domainFilter}
+              onChange={(e) => setDomainFilter(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All domains</option>
+              {domains.map((domain) => (
+                <option key={domain} value={domain}>{domain}</option>
+              ))}
+            </select>
 
-         
+            <select
+              value={specialtyFilter}
+              onChange={(e) => setSpecialtyFilter(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All specialties</option>
+              {specialties.map((specialty) => (
+                <option key={specialty} value={specialty}>{specialty}</option>
+              ))}
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="newest">Most Recent</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+          </div>
+
+          {(keyword || domainFilter || specialtyFilter || sortBy !== 'newest') && (
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={() => {
+                  setKeyword('');
+                  setDomainFilter('');
+                  setSpecialtyFilter('');
+                  setSortBy('newest');
+                }}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Job List Header */}
