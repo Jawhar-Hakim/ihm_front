@@ -22,6 +22,7 @@ import Applications from "./pages/candidate/Applications";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
 import ManageOffers from "./pages/company/ManageOffers";
 import ViewCandidates from "./pages/company/ViewCandidates";
+import CompanyJobDetails from "./pages/company/CompanyJobDetails";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             {/* Company routes */}
             <Route path="/company" element={<ProtectedRoute allowedRoles={['company']}><DashboardLayout><CompanyDashboard /></DashboardLayout></ProtectedRoute>} />
             <Route path="/company/offers" element={<ProtectedRoute allowedRoles={['company']}><DashboardLayout><ManageOffers /></DashboardLayout></ProtectedRoute>} />
+            <Route path="/company/offers/:id" element={<ProtectedRoute allowedRoles={['company']}><DashboardLayout><CompanyJobDetails /></DashboardLayout></ProtectedRoute>} />
             <Route path="/company/candidates" element={<ProtectedRoute allowedRoles={['company']}><DashboardLayout><ViewCandidates /></DashboardLayout></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Briefcase, User, FileText, LogOut } from 'lucide-react';
+import { Search, Briefcase, User, FileText, LogOut, LayoutDashboard, Globe, Settings, Users } from 'lucide-react';
 
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
@@ -29,8 +29,8 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-6 md:gap-10">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center transition-transform group-hover:scale-110">
                 <Briefcase size={18} className="text-primary-foreground" />
               </div>
               <span className="font-heading font-bold text-lg hidden sm:inline-block">HireFlow</span>
@@ -38,56 +38,113 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-4 space-x-2 sm:space-x-4">
+            {/* Show Dashboard button next to Website/Home link for company */}
+            {user?.role === 'company' && (
+              <div className="hidden md:flex items-center gap-2 border-r pr-4 mr-2 border-border/50">
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-primary transition-colors">
+                  <Link to="/" className="flex items-center gap-1.5">
+                    <Globe size={16} />
+                    <span className="text-xs font-bold uppercase tracking-wider">Website</span>
+                  </Link>
+                </Button>
+                <Button size="sm" variant="default" asChild className="rounded-full shadow-sm bg-primary hover:bg-primary/90">
+                  <Link to="/company" className="flex items-center gap-1.5">
+                    <LayoutDashboard size={16} />
+                    <span className="text-xs font-bold uppercase tracking-wider">Dashboard</span>
+                  </Link>
+                </Button>
+              </div>
+            )}
+
             <div className="w-full flex-1 md:w-auto md:flex-none">
               <div className="relative max-w-sm ml-auto">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search jobs..."
-                  className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px] rounded-full bg-muted/50"
-                  onChange={(e) => {
-                    // Search functionality could trigger context/state or navigate to search page
-                  }}
+                  className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px] rounded-full bg-muted/50 focus-visible:ring-primary"
                 />
               </div>
             </div>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-border/50 shadow-sm p-0 overflow-hidden hover:ring-2 hover:ring-primary/20 transition-all">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-primary/10 text-primary font-black">
                       {user?.email?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
+              <DropdownMenuContent className="w-64 mt-2 p-2 shadow-xl border-border/50 bg-background/95 backdrop-blur" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal px-2 py-3 mb-2 bg-muted/30 rounded-lg">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.email}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.role}
+                    <p className="text-sm font-bold leading-none text-foreground">{user?.email}</p>
+                    <p className="text-xs font-bold leading-none text-primary uppercase tracking-widest mt-1 opacity-70">
+                      {user?.role} Role
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/candidate/profile" className="cursor-pointer flex items-center">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>My Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/candidate/applications" className="cursor-pointer flex items-center">
-                    <FileText className="mr-2 h-4 w-4" />
-                    <span>My Applications</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                
+                <DropdownMenuSeparator className="mb-2" />
+                
+                {user?.role === 'candidate' && (
+                  <div className="space-y-1">
+                    <DropdownMenuItem asChild className="rounded-md focus:bg-primary focus:text-primary-foreground cursor-pointer">
+                      <Link to="/candidate/profile" className="flex items-center py-2">
+                        <User className="mr-3 h-4 w-4" />
+                        <span className="font-medium">My Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-md focus:bg-primary focus:text-primary-foreground cursor-pointer">
+                      <Link to="/candidate/applications" className="flex items-center py-2">
+                        <FileText className="mr-3 h-4 w-4" />
+                        <span className="font-medium">My Applications</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </div>
+                )}
+
+                {user?.role === 'company' && (
+                  <div className="space-y-1">
+                    <DropdownMenuItem asChild className="rounded-md focus:bg-primary focus:text-primary-foreground cursor-pointer">
+                      <Link to="/company" className="flex items-center py-2">
+                        <LayoutDashboard className="mr-3 h-4 w-4" />
+                        <span className="font-medium">Dashboard Overview</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-md focus:bg-primary focus:text-primary-foreground cursor-pointer">
+                      <Link to="/company/offers" className="flex items-center py-2">
+                        <Briefcase className="mr-3 h-4 w-4" />
+                        <span className="font-medium">Manage Job Offers</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="rounded-md focus:bg-primary focus:text-primary-foreground cursor-pointer">
+                      <Link to="/company/candidates" className="flex items-center py-2">
+                        <Users className="mr-3 h-4 w-4" />
+                        <span className="font-medium">Review Candidates</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </div>
+                )}
+
+                {user?.role === 'admin' && (
+                  <div className="space-y-1">
+                    <DropdownMenuItem asChild className="rounded-md focus:bg-primary focus:text-primary-foreground cursor-pointer">
+                      <Link to="/admin" className="flex items-center py-2">
+                        <Settings className="mr-3 h-4 w-4" />
+                        <span className="font-medium">Admin Console</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </div>
+                )}
+                
+                <DropdownMenuSeparator className="my-2" />
+                
+                <DropdownMenuItem onClick={handleLogout} className="rounded-md cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground py-2 font-bold">
+                  <LogOut className="mr-3 h-4 w-4" />
+                  <span>Log out Account</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
