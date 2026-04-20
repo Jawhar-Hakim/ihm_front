@@ -258,7 +258,7 @@ const JobOffers: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <Clock size={13} className="text-amber-700 dark:text-amber-600 flex-shrink-0" />
-                        <span>{job.workMode || (job as any).type || 'Full-time'}</span>
+                        <span>{job.contractType || job.workMode || (job as any).type || 'Full-time'}</span>
                       </div>
                     </div>
 
@@ -363,7 +363,7 @@ const JobOffers: React.FC = () => {
                   <Clock size={14} className="text-amber-600" />
                   <span className="text-xs font-medium uppercase text-gray-500">Type</span>
                 </div>
-                <p className="text-sm font-semibold">{selectedJob?.workMode || (selectedJob as any)?.type || 'Full-time'}</p>
+                <p className="text-sm font-semibold">{selectedJob?.contractType || selectedJob?.workMode || (selectedJob as any)?.type || 'Full-time'}</p>
               </div>
             </div>
 
@@ -373,6 +373,10 @@ const JobOffers: React.FC = () => {
                 Job Requirements & Details
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {selectedJob?.experienceLevel && `Experience Level: ${selectedJob.experienceLevel}\n`}
+                {selectedJob?.educationLevel && `Education Level: ${selectedJob.educationLevel}\n`}
+                {selectedJob?.contractType && `Contract Type: ${selectedJob.contractType}\n`}
+                {(selectedJob?.experienceLevel || selectedJob?.educationLevel || selectedJob?.contractType) && '\n'}
                 {selectedJob?.detailsOffre || (selectedJob as any)?.detailsOffre}
                 {((selectedJob?.detailsOffre || (selectedJob as any)?.detailsOffre) && selectedJob?.description) && '\n\n'}
                 {selectedJob?.description || (selectedJob as any)?.description}

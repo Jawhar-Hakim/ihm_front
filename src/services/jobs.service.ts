@@ -22,21 +22,34 @@ export const jobsService = {
     return currentSociete;
   },
 
-  mapOffer: (item: any): JobOffer => ({
-    id: item._id || item.id,
-    companyId: item.societe?._id || item.societe,
-    companyName: item.societe?.nom || 'Company',
-    title: item.titre || '',
-    description: item.description || '',
-    detailsOffre: item.detailsOffre || '',
-    domain: item.domaine || item.categorie?.domaine || '',
-    specialty: item.specialiteName || item.specialite?.name || '',
-    contractType: item.contractType || '',
-    experienceLevel: item.experienceLevel || '',
-    workMode: item.type || item.workMode || 'On-site',
-    createdAt: item.datePublication || item.createdAt || new Date().toISOString(),
-    isActive: true,
-  }),
+  mapOffer: (item: any): JobOffer => {
+    let extraFields: any = {};
+    if (item.detailsOffre && item.detailsOffre.startsWith('{')) {
+      try {
+        extraFields = JSON.parse(item.detailsOffre);
+      } catch (e) {
+        console.warn("Failed to parse detailsOffre as JSON", e);
+      }
+    }
+
+    return {
+      id: item._id || item.id,
+      companyId: item.societe?._id || item.societe,
+      companyName: item.societe?.nom || 'Company',
+      title: item.titre || '',
+      description: item.description || '',
+      detailsOffre: extraFields.detailsOffre || item.detailsOffre || '',
+      domain: item.domaine || item.categorie?.domaine || '',
+      specialty: item.specialiteName || item.specialite?.name || '',
+      contractType: extraFields.contractType || item.contractType || '',
+      experienceLevel: extraFields.experienceLevel || item.experienceLevel || '',
+      educationLevel: extraFields.educationLevel || item.educationLevel || '',
+      responsibilities: extraFields.responsibilities || item.responsibilities || '',
+      workMode: item.type || item.workMode || 'On-site',
+      createdAt: item.datePublication || item.createdAt || new Date().toISOString(),
+      isActive: true,
+    };
+  },
 
   getAll: async (params?: Record<string, string>) => {
     console.log("Fetching all job offers with params:", params);
@@ -66,20 +79,28 @@ export const jobsService = {
     specialite: data.specialty,
     categorie: data.domain,
     type: data.workMode,
-    contractType: data.contractType,
-    experienceLevel: data.experienceLevel,
-    detailsOffre: data.detailsOffre,
+    detailsOffre: JSON.stringify({
+      contractType: data.contractType,
+      experienceLevel: data.experienceLevel,
+      educationLevel: data.educationLevel,
+      responsibilities: data.responsibilities,
+      detailsOffre: data.detailsOffre
+    })
   }),
 
   update: (id: string, data: Partial<JobOffer>) => api.patch<JobOffer>(`/offres-emploi/${id}`, {
     titre: data.title,
     description: data.description,
-    detailsOffre: data.detailsOffre,
     specialite: data.specialty,
     categorie: data.domain,
     type: data.workMode,
-    contractType: data.contractType,
-    experienceLevel: data.experienceLevel,
+    detailsOffre: JSON.stringify({
+      contractType: data.contractType,
+      experienceLevel: data.experienceLevel,
+      educationLevel: data.educationLevel,
+      responsibilities: data.responsibilities,
+      detailsOffre: data.detailsOffre
+    })
   }),
 
   delete: (id: string) => api.delete(`/offres-emploi/${id}`),

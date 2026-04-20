@@ -68,12 +68,12 @@ const ManageOffers: React.FC = () => {
         id: raw._id,
         title: raw.titre || '',
         description: raw.description || '',
-        detailsOffre: raw.detailsOffre || '',
+        detailsOffre: offer.detailsOffre || '',
         domain: raw.categorie?._id || raw.categorie || '',
         specialty: raw.specialite?._id || raw.specialite || '',
         workMode: raw.type || raw.workMode || 'On-site',
-        contractType: raw.contractType || '',
-        experienceLevel: raw.experienceLevel || '',
+        contractType: offer.contractType || '',
+        experienceLevel: offer.experienceLevel || '',
       });
       setDialogOpen(true);
     }
@@ -111,8 +111,13 @@ const ManageOffers: React.FC = () => {
       }
       
       // Refresh offers
-      const offersData = await jobsService.getAll({ societe: actualCompanyId });
-      setOffers(offersData);
+      const response = await api.get<any>('/offres-emploi');
+      const allOffers = Array.isArray(response) ? response : (response.data || []);
+      const myOffers = allOffers.filter((o: any) => (o.societe?._id || o.societe) === actualCompanyId);
+      setRawOffers(myOffers);
+      
+      const mappedOffers = myOffers.map(jobsService.mapOffer);
+      setOffers(mappedOffers);
       
       setDialogOpen(false);
       setEditingOffer({});
@@ -225,7 +230,7 @@ const ManageOffers: React.FC = () => {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">{editingOffer.id ? 'Edit Job Offer' : 'Create New Job Offer'}</DialogTitle>
             <DialogDescription>
@@ -293,7 +298,7 @@ const ManageOffers: React.FC = () => {
               <Textarea 
                 id="description" 
                 placeholder="Describe the role, requirements, and what it's like to work at your company..." 
-                className="min-h-[150px] resize-none"
+                className="min-h-[120px] resize-none"
                 value={editingOffer.description || ''} 
                 onChange={e => setEditingOffer(p => ({ ...p, description: e.target.value }))}
               />
@@ -302,26 +307,38 @@ const ManageOffers: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="contract">Contract Type</Label>
-                <Input 
-                  id="contract" 
-                  placeholder="e.g. CDI, Freelance" 
+                <Select 
                   value={editingOffer.contractType || ''} 
-                  onChange={e => setEditingOffer(p => ({ ...p, contractType: e.target.value }))}
-                />
+                  onValueChange={val => setEditingOffer(p => ({ ...p, contractType: val }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CDI">CDI</SelectItem>
+                    <SelectItem value="CDD">CDD</SelectItem>
+                    <SelectItem value="Freelance">Freelance</SelectItem>
+                    <SelectItem value="Internship">Internship</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="experience">Experience Level</Label>
-                <Input 
-                  id="experience" 
-                  placeholder="e.g. 3-5 years" 
+                <Select 
                   value={editingOffer.experienceLevel || ''} 
-                  onChange={e => setEditingOffer(p => ({ ...p, experienceLevel: e.target.value }))}
-                />
+                  onValueChange={val => setEditingOffer(p => ({ ...p, experienceLevel: val }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Junior (0-2 years)">Junior (0-2 years)</SelectItem>
+                    <SelectItem value="Intermediate (3-5 years)">Intermediate (3-5 years)</SelectItem>
+                    <SelectItem value="Senior (5-10 years)">Senior (5-10 years)</SelectItem>
+                    <SelectItem value="Expert (10+ years)">Expert (10+ years)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : editingOffer.id ? 'Update Offer' : 'Publish Offer'}

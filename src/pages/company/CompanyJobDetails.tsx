@@ -47,22 +47,7 @@ const CompanyJobDetails: React.FC = () => {
       setCategories(Array.isArray(cats) ? cats : (cats.data || []));
       setSpecialties(Array.isArray(specs) ? specs : (specs.data || []));
       
-      const mappedJob: JobOffer = {
-        id: jobData._id,
-        companyId: jobData.societe?._id || jobData.societe,
-        companyName: jobData.societe?.nom || 'Company',
-        title: jobData.titre,
-        description: jobData.description,
-        detailsOffre: jobData.detailsOffre,
-        domain: jobData.domaine || jobData.categorie?.domaine,
-        specialty: jobData.specialiteName || jobData.specialite?.name,
-        contractType: jobData.contractType,
-        experienceLevel: jobData.experienceLevel,
-        workMode: jobData.type || jobData.workMode || jobData.contractType || 'On-site',
-        createdAt: jobData.datePublication || jobData.createdAt,
-        isActive: true,
-      };
-      
+      const mappedJob = jobsService.mapOffer(jobData);
       setJob(mappedJob);
       setApplications(appsData);
     } catch (err) {
@@ -80,7 +65,7 @@ const CompanyJobDetails: React.FC = () => {
   const handleUpdateStatus = async (appId: string, status: string) => {
     try {
       setUpdatingId(appId);
-      await jobsService.updateApplicationStatus(appId, status);
+      await jobsService.update(appId, status); // Fixed: this was updateApplicationStatus
       setApplications(prev => prev.map(app => 
         app.id === appId ? { ...app, status: status as any } : app
       ));
@@ -96,17 +81,16 @@ const CompanyJobDetails: React.FC = () => {
   };
 
   const handleEditInit = () => {
-    if (rawJob) {
+    if (rawJob && job) {
       setEditingOffer({
         id: rawJob._id,
         title: rawJob.titre,
         description: rawJob.description,
-        detailsOffre: rawJob.detailsOffre,
         domain: rawJob.categorie?._id || rawJob.categorie,
         specialty: rawJob.specialite?._id || rawJob.specialite,
         workMode: rawJob.type || rawJob.workMode || 'On-site',
-        contractType: rawJob.contractType,
-        experienceLevel: rawJob.experienceLevel,
+        contractType: job.contractType || '',
+        experienceLevel: job.experienceLevel || '',
       });
       setEditDialogOpen(true);
     }
@@ -379,7 +363,7 @@ const CompanyJobDetails: React.FC = () => {
       </div>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Edit Job Offer</DialogTitle>
             <DialogDescription>
@@ -445,7 +429,7 @@ const CompanyJobDetails: React.FC = () => {
               <Label htmlFor="description">Job Description</Label>
               <Textarea 
                 id="description" 
-                className="min-h-[150px] resize-none"
+                className="min-h-[120px] resize-none"
                 value={editingOffer.description || ''} 
                 onChange={e => setEditingOffer(p => ({ ...p, description: e.target.value }))}
               />
@@ -454,24 +438,38 @@ const CompanyJobDetails: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="contract">Contract Type</Label>
-                <Input 
-                  id="contract" 
+                <Select 
                   value={editingOffer.contractType || ''} 
-                  onChange={e => setEditingOffer(p => ({ ...p, contractType: e.target.value }))}
-                />
+                  onValueChange={val => setEditingOffer(p => ({ ...p, contractType: val }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CDI">CDI</SelectItem>
+                    <SelectItem value="CDD">CDD</SelectItem>
+                    <SelectItem value="Freelance">Freelance</SelectItem>
+                    <SelectItem value="Internship">Internship</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="experience">Experience Level</Label>
-                <Input 
-                  id="experience" 
+                <Select 
                   value={editingOffer.experienceLevel || ''} 
-                  onChange={e => setEditingOffer(p => ({ ...p, experienceLevel: e.target.value }))}
-                />
+                  onValueChange={val => setEditingOffer(p => ({ ...p, experienceLevel: val }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Junior (0-2 years)">Junior (0-2 years)</SelectItem>
+                    <SelectItem value="Intermediate (3-5 years)">Intermediate (3-5 years)</SelectItem>
+                    <SelectItem value="Senior (5-10 years)">Senior (5-10 years)</SelectItem>
+                    <SelectItem value="Expert (10+ years)">Expert (10+ years)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-2">
             <Button variant="outline" onClick={() => setEditDialogOpen(false)} disabled={saving}>Cancel</Button>
             <Button onClick={handleSaveEdit} disabled={saving}>
               {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Update Offer'}
