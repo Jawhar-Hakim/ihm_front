@@ -15,6 +15,8 @@ const JobDetails: React.FC = () => {
   const [job, setJob] = useState<JobOffer | null>(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
+  const [customCv, setCustomCv] = useState<string | null>(null);
+  const [uploadingCv, setUploadingCv] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -24,6 +26,36 @@ const JobDetails: React.FC = () => {
       .finally(() => setLoading(false));
   }, [id, toast]);
 
+  const handleCvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.type !== "application/pdf") {
+      toast({ title: 'Invalid File', description: 'Please choose a valid PDF file.', variant: 'destructive' });
+      return;
+    }
+    
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Please use a PDF under 2MB', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingCv(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setCustomCv(event.target?.result as string);
+        toast({ title: 'Success', description: 'CV uploaded successfully for this application' });
+      }
+      setUploadingCv(false);
+    };
+    reader.onerror = () => {
+      toast({ title: 'Error', description: 'Failed to read PDF file', variant: 'destructive' });
+      setUploadingCv(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleApply = async () => {
     if (!user?.id) {
       navigate('/register?role=candidate');
@@ -31,7 +63,10 @@ const JobDetails: React.FC = () => {
     }
     setApplying(true);
     try {
-      await jobsService.apply(id || '', { candidateId: user.id });
+      await jobsService.apply(id || '', { 
+        candidateId: user.id,
+        cvUrl: customCv || undefined
+      });
       toast({ title: 'Success', description: 'Application submitted successfully!' });
       navigate('/jobs');
     } catch (err: any) {
@@ -157,6 +192,51 @@ const JobDetails: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* CV Upload Section */}
+              {user?.id && (
+                <div className="mb-8 p-6 bg-gray-50 dark:bg-slate-800/30 rounded-xl border border-gray-100 dark:border-slate-800">
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Application Document</h3>
+                  <div className="flex flex-col gap-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      By default, we will use the CV from your profile. Upload a different one for this specific application if needed.
+                    </p>
+                    <div className="relative">
+                      <input 
+                        type="file" 
+                        id="customCv" 
+                        accept="application/pdf"
+                        onChange={handleCvUpload}
+                        className="hidden" 
+                      />
+                      <label 
+                        htmlFor="customCv" 
+                        className={`flex items-center justify-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer transition-all ${
+                          customCv ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-400' : 
+                          'border-gray-300 dark:border-slate-700 hover:border-blue-500 text-gray-600 dark:text-gray-400'
+                        }`}
+                      >
+                        {uploadingCv ? (
+                          <Loader2 className="animate-spin h-5 w-5" />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+                            <span className="text-sm font-medium">{customCv ? 'Custom CV Attached' : 'Upload Specific CV (Optional)'}</span>
+                          </div>
+                        )}
+                      </label>
+                      {customCv && (
+                        <button 
+                          onClick={() => setCustomCv(null)}
+                          className="absolute -top-2 -right-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-full p-1 text-gray-400 hover:text-red-500 shadow-sm"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* CTA */}
               <div className="flex gap-3">

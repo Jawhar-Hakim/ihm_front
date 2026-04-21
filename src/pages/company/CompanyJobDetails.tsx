@@ -65,7 +65,7 @@ const CompanyJobDetails: React.FC = () => {
   const handleUpdateStatus = async (appId: string, status: string) => {
     try {
       setUpdatingId(appId);
-      await jobsService.update(appId, status); // Fixed: this was updateApplicationStatus
+      await jobsService.updateApplicationStatus(appId, status);
       setApplications(prev => prev.map(app => 
         app.id === appId ? { ...app, status: status as any } : app
       ));
