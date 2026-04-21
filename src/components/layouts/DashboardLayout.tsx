@@ -38,34 +38,16 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-4 space-x-2 sm:space-x-4">
-            {/* Show Dashboard button next to Website/Home link for company */}
-            {user?.role === 'company' && (
-              <div className="hidden md:flex items-center gap-2 border-r pr-4 mr-2 border-border/50">
-                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-primary transition-colors">
-                  <Link to="/" className="flex items-center gap-1.5">
-                    <Globe size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">Website</span>
-                  </Link>
-                </Button>
+            {(user?.role === 'company' || user?.role === 'candidate') && (
+              <div className="hidden md:flex items-center">
                 <Button size="sm" variant="default" asChild className="rounded-full shadow-sm bg-primary hover:bg-primary/90">
-                  <Link to="/company" className="flex items-center gap-1.5">
+                  <Link to={`/${user.role}`} className="flex items-center gap-1.5">
                     <LayoutDashboard size={16} />
                     <span className="text-xs font-bold uppercase tracking-wider">Dashboard</span>
                   </Link>
                 </Button>
               </div>
             )}
-
-            <div className="w-full flex-1 md:w-auto md:flex-none">
-              <div className="relative max-w-sm ml-auto">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search jobs..."
-                  className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px] rounded-full bg-muted/50 focus-visible:ring-primary"
-                />
-              </div>
-            </div>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -118,12 +100,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                       <Link to="/company/offers" className="flex items-center py-2">
                         <Briefcase className="mr-3 h-4 w-4" />
                         <span className="font-medium">Manage Job Offers</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="rounded-md focus:bg-primary focus:text-primary-foreground cursor-pointer">
-                      <Link to="/company/candidates" className="flex items-center py-2">
-                        <Users className="mr-3 h-4 w-4" />
-                        <span className="font-medium">Review Candidates</span>
                       </Link>
                     </DropdownMenuItem>
                   </div>

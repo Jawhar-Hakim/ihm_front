@@ -19,6 +19,7 @@ const JobOffers: React.FC = () => {
   const [applying, setApplying] = useState(false);
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [candidateId, setCandidateId] = useState<string | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedDomain, setSelectedDomain] = useState('');
@@ -109,10 +110,22 @@ const JobOffers: React.FC = () => {
     setApplying(true);
     try {
       const jobId = selectedJob.id || (selectedJob as any)._id;
-      await jobsService.apply(jobId, { candidateId });
+      
+      let cvBase64 = undefined;
+      if (cvFile) {
+        const reader = new FileReader();
+        cvBase64 = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(cvFile);
+        });
+      }
+
+      await jobsService.apply(jobId, { candidateId, cvUrl: cvBase64 });
       setAppliedJobIds(prev => new Set(prev).add(jobId));
       toast({ title: 'Success', description: 'Application submitted successfully!' });
       setSelectedJob(null);
+      setCvFile(null);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to apply', variant: 'destructive' });
     } finally {
@@ -314,23 +327,25 @@ const JobOffers: React.FC = () => {
       </div>
 
       {/* Footer CTA */}
-      <div className="border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="container mx-auto px-6 lg:px-12 py-12 text-center">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-            Didn't find what you're looking for?
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xl mx-auto">
-            Register now to get personalized job recommendations based on your skills and preferences.
-          </p>
-          <Link
-            to="/register?role=candidate"
-            className="inline-block px-6 py-2.5 text-sm font-medium rounded-lg text-[#e8f4f1] transition-colors"
-            style={{ background: 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)' }}
-          >
-            Start Your Journey
-          </Link>
+      {!user && (
+        <div className="border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="container mx-auto px-6 lg:px-12 py-12 text-center">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+              Didn't find what you're looking for?
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xl mx-auto">
+              Register now to get personalized job recommendations based on your skills and preferences.
+            </p>
+            <Link
+              to="/register?role=candidate"
+              className="inline-block px-6 py-2.5 text-sm font-medium rounded-lg text-[#e8f4f1] transition-colors"
+              style={{ background: 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)' }}
+            >
+              Start Your Journey
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Expanded Details Dialog */}
       <Dialog open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
@@ -363,7 +378,7 @@ const JobOffers: React.FC = () => {
                   <Clock size={14} className="text-amber-600" />
                   <span className="text-xs font-medium uppercase text-gray-500">Type</span>
                 </div>
-                <p className="text-sm font-semibold">{selectedJob?.contractType || selectedJob?.workMode || (selectedJob as any)?.type || 'Full-time'}</p>
+                <p className="text-sm font-semibold">{selectedJob?.workMode || (selectedJob as any)?.type || 'On-site'}</p>
               </div>
             </div>
 
@@ -372,30 +387,48 @@ const JobOffers: React.FC = () => {
                 <Info size={18} />
                 Job Requirements & Details
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {selectedJob?.experienceLevel && `Experience Level: ${selectedJob.experienceLevel}\n`}
-                {selectedJob?.educationLevel && `Education Level: ${selectedJob.educationLevel}\n`}
-                {selectedJob?.contractType && `Contract Type: ${selectedJob.contractType}\n`}
-                {(selectedJob?.experienceLevel || selectedJob?.educationLevel || selectedJob?.contractType) && '\n'}
-                {selectedJob?.detailsOffre || (selectedJob as any)?.detailsOffre}
-                {((selectedJob?.detailsOffre || (selectedJob as any)?.detailsOffre) && selectedJob?.description) && '\n\n'}
+              <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                 {selectedJob?.description || (selectedJob as any)?.description}
-              </p>
+                {((selectedJob?.description || (selectedJob as any)?.description) && (selectedJob?.contractType || selectedJob?.experienceLevel)) && '\n\n'}
+                {selectedJob?.contractType && <>Contract Type: <span className="font-bold text-gray-900 dark:text-white">{selectedJob.contractType}</span>{'\n'}</>}
+                {selectedJob?.experienceLevel && <>Experience Level: <span className="font-bold text-gray-900 dark:text-white">{selectedJob.experienceLevel}</span></>}
+              </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex justify-center">
-              <Button 
-                onClick={handleApply} 
-                disabled={applying}
-                className="px-10 py-3 text-base"
-                style={{ background: 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)' }}
-              >
-                {applying ? (
-                  <><Loader2 className="animate-spin mr-2 h-4 w-4" /> Applying...</>
-                ) : (
-                  'Apply Now'
-                )}
-              </Button>
+            <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex flex-col justify-center gap-4">
+              {appliedJobIds.has(selectedJob?.id || (selectedJob as any)?._id) ? (
+                <div className="flex flex-col items-center">
+                   <div className="text-emerald-600 font-bold flex items-center justify-center gap-2 mb-2 p-3 bg-emerald-50 rounded-lg w-full">
+                     <CheckCircle size={20} /> You have already applied for this position
+                   </div>
+                </div>
+              ) : (
+                <>
+                  <div className="w-full max-w-sm mx-auto text-center border p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border-dashed">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                       Attach a custom CV for this job (optional)
+                    </label>
+                    <input 
+                      type="file" 
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-slate-800 dark:file:text-slate-300"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleApply} 
+                    disabled={applying}
+                    className="px-10 py-3 mx-auto w-1/2 text-base"
+                    style={{ background: 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)' }}
+                  >
+                    {applying ? (
+                      <><Loader2 className="animate-spin mr-2 h-4 w-4" /> Applying...</>
+                    ) : (
+                      'Apply Now'
+                    )}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </DialogContent>

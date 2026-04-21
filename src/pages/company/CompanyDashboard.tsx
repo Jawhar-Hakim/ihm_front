@@ -95,8 +95,8 @@ const CompanyDashboard: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-8">
-        <Card className="lg:col-span-3 border-none bg-card shadow-sm overflow-hidden">
+      <div className="grid gap-8">
+        <Card className="border-none bg-card shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/20 px-8 py-6">
             <div>
               <CardTitle className="font-heading text-2xl font-bold">Recent Job Postings</CardTitle>
@@ -146,40 +146,6 @@ const CompanyDashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
-
-        <div className="lg:col-span-2 space-y-8">
-          <Card className="border-none bg-card shadow-sm overflow-hidden">
-            <CardHeader className="bg-muted/20 border-b">
-              <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 p-6">
-              {[
-                { to: '/company/offers', label: 'Manage Job Offers', icon: <Briefcase size={20} />, color: 'text-blue-600', bg: 'bg-blue-50' },
-                { to: '/company/candidates', label: 'Browse All Candidates', icon: <Users size={20} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                { to: '/company/profile', label: 'Update Company Profile', icon: <CheckCircle2 size={20} />, color: 'text-purple-600', bg: 'bg-purple-50' },
-              ].map((action, idx) => (
-                <Button key={idx} variant="outline" className="h-16 justify-start px-6 text-base font-bold border-muted/50 hover:bg-muted/20 hover:border-primary/50 transition-all rounded-xl group" asChild>
-                  <Link to={action.to}>
-                    <div className={`w-10 h-10 rounded-lg ${action.bg} flex items-center justify-center mr-4 group-hover:scale-110 transition-transform`}>
-                      <span className={action.color}>{action.icon}</span>
-                    </div>
-                    {action.label}
-                  </Link>
-                </Button>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-none bg-primary text-primary-foreground shadow-lg overflow-hidden relative">
-            <CardContent className="p-8 relative z-10">
-              <h3 className="text-2xl font-black mb-2">Need Help?</h3>
-              <p className="text-primary-foreground/80 mb-6 font-medium">Our support team is here to help you find the best candidates for your company.</p>
-              <Button variant="secondary" className="font-bold w-full rounded-xl">Contact Support</Button>
-            </CardContent>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl" />
-          </Card>
-        </div>
       </div>
     </div>
   );
