@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, MapPin, Briefcase } from 'lucide-react';
+import { Search, Loader2, MapPin, Briefcase, Globe, Clock, CheckCircle, Info } from 'lucide-react';
 import { jobsService } from '@/services/jobs.service';
 import { candidatesService } from '@/services/candidates.service';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { JobOffer } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const SearchJobs: React.FC = () => {
   const { user } = useAuth();
@@ -18,7 +19,9 @@ const SearchJobs: React.FC = () => {
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [applying, setApplying] = useState<string | null>(null);
+  const [applyingIndicator, setApplyingIndicator] = useState<string | null>(null);
+  const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
 
   // Filters State
   const [keyword, setKeyword] = useState('');
@@ -57,21 +60,36 @@ const SearchJobs: React.FC = () => {
     fetchData();
   }, [toast, user]);
 
-  const handleApply = async (jobId: string, e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleApply = async () => {
     if (!candidateId) {
       toast({ title: 'Profile required', description: 'Please complete your profile to apply.', variant: 'destructive' });
       return;
     }
-    setApplying(jobId);
+    if (!selectedJob) return;
+    
+    const jobId = selectedJob.id || (selectedJob as any)._id;
+    setApplyingIndicator(jobId);
+    
     try {
-      await jobsService.apply(jobId, { candidateId });
+      let cvBase64 = undefined;
+      if (cvFile) {
+        const reader = new FileReader();
+        cvBase64 = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(cvFile);
+        });
+      }
+
+      await jobsService.apply(jobId, { candidateId, cvUrl: cvBase64 });
       setAppliedJobIds(prev => new Set(prev).add(jobId));
       toast({ title: 'Success', description: 'Application submitted successfully!' });
+      setSelectedJob(null);
+      setCvFile(null);
     } catch (err: any) {
       toast({ title: 'Error', description: err.response?.data?.message || err.message || 'Failed to apply', variant: 'destructive' });
     } finally {
-      setApplying(null);
+      setApplyingIndicator(null);
     }
   };
 
@@ -179,88 +197,82 @@ const SearchJobs: React.FC = () => {
           )}
         </div>
 
-        {/* Job List Header */}
-        <div className="grid grid-cols-12 gap-4 pb-3 border-border/80 border-b-2 font-bold text-xs tracking-wider text-muted-foreground">
-          <div className="col-span-8 md:col-span-4">JOB PROFILE</div>
-          <div className="hidden md:block md:col-span-4">DESCRIPTION</div>
-          <div className="col-span-4 md:col-span-4 text-right md:text-left flex justify-end md:justify-between px-2">
-            <span className="hidden md:inline-block">POSTED</span>
-            <span>DOMAIN / ACTION</span>
-          </div>
+        {/* Job Listings Header */}
+        <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mt-8 mb-4">
+          {filteredJobs.length} OF {jobs.length} POSITIONS AVAILABLE
         </div>
 
-        {/* Job Listings */}
-        <div className="flex flex-col mt-2">
+        {/* Job Listings Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
           {loading ? (
-            <div className="flex justify-center py-20"><Loader2 className="animate-spin h-10 w-10 text-primary" /></div>
+            <div className="col-span-full flex justify-center py-20"><Loader2 className="animate-spin h-10 w-10 text-primary" /></div>
           ) : filteredJobs.length > 0 ? (
              filteredJobs.map(job => (
-              <div key={job.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 py-6 border-b border-border/40 hover:bg-muted/20 transition-colors px-2 group">
-                {/* Title and Company */}
-                <div className="col-span-1 md:col-span-4 pr-4">
-                  <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer mb-1 line-clamp-2">
-                    {job.title}
-                  </h3>
-                  <div className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    {job.companyName || 'Company'}
+              <div key={job.id} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-5 hover:shadow-md transition-shadow relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 left-0 w-full h-1 bg-[#134e4a]"></div>
+                
+                <div>
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-1 pr-6">
+                      {job.title}
+                    </h3>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#1e3a8a] text-white">
+                      New
+                    </span>
                   </div>
-                  {job.specialty && (
-                    <div className="mt-3">
-                      <Badge variant="secondary" className="text-xs py-0.5 bg-muted font-medium uppercase tracking-wide text-muted-foreground">
-                        {job.specialty}
-                      </Badge>
-                    </div>
-                  )}
-                </div>
+                  
+                  <div className="text-sm text-gray-500 mb-4">{job.companyName || 'Company'}</div>
 
-                {/* Description Column */}
-                <div className="col-span-1 md:col-span-4 hidden md:block pr-4">
-                  <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <Globe size={14} className="mr-2 text-blue-600" /> {job.domain}
+                    </div>
+                    {job.specialty && (
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                        <Briefcase size={14} className="mr-2 text-teal-600" /> {job.specialty}
+                      </div>
+                    )}
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <Clock size={14} className="mr-2 text-amber-600" /> {job.contractType || 'Full-time'}
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-500 mb-6 line-clamp-2">
                     {job.description || "No description provided."}
                   </p>
                 </div>
                 
-                {/* Right Side Info */}
-                <div className="col-span-1 md:col-span-4 flex flex-row items-center justify-between mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-border/40">
-                  <div className="text-sm text-foreground/70 hidden md:block shrink-0">
-                    {formatRelativeDate(job.createdAt)}
-                  </div>
+                {/* Actions */}
+                <div className="flex items-center gap-3 mt-auto">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setSelectedJob(job)}
+                  >
+                    Details
+                  </Button>
                   
-                  <div className="flex items-center justify-end gap-3 flex-1 md:flex-none w-full md:w-auto overflow-hidden">
-                    {/* Domain badge simulating location in the image */}
-                    {job.domain && (
-                      <span className="text-sm text-muted-foreground flex items-center gap-1 hidden lg:flex truncate max-w-[120px]">
-                        <Briefcase size={14} className="opacity-50 shrink-0" />
-                        <span className="truncate">{job.domain}</span>
-                      </span>
-                    )}
-                    
-                    {appliedJobIds.has(job.id) || appliedJobIds.has((job as any)._id) ? (
-                      <Button 
-                        size="sm" 
-                        disabled
-                        variant="secondary"
-                        className="rounded-full shadow-sm shrink-0 ml-auto md:ml-0 hover:bg-secondary"
-                      >
-                        Applied ✅
-                      </Button>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        onClick={(e) => handleApply(job.id || (job as any)._id, e)} 
-                        disabled={applying === (job.id || (job as any)._id)}
-                        className="rounded-full shadow-sm shrink-0 ml-auto md:ml-0"
-                      >
-                        {applying === (job.id || (job as any)._id) && <Loader2 className="animate-spin mr-1 h-3 w-3" />}
-                        {applying === (job.id || (job as any)._id) ? 'Applying...' : 'Apply Now'}
-                      </Button>
-                    )}
-                  </div>
+                  {appliedJobIds.has(job.id) || appliedJobIds.has((job as any)._id) ? (
+                     <Button 
+                       disabled
+                       className="flex-1 bg-gray-200 text-gray-500 hover:bg-gray-200 cursor-not-allowed"
+                     >
+                       Applied <CheckCircle size={14} className="ml-1" />
+                     </Button>
+                   ) : (
+                     <Button 
+                       onClick={() => setSelectedJob(job)}
+                       className="flex-1 text-[#e8f4f1] transition-colors"
+                       style={{ background: 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)' }}
+                     >
+                       Apply Now
+                     </Button>
+                   )}
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-20">
+            <div className="col-span-full text-center py-20">
               <Search size={48} className="mx-auto text-muted-foreground mb-4 opacity-20" />
               <h3 className="text-lg font-semibold mb-2">No jobs matched your search</h3>
               <Button variant="link" onClick={() => { setKeyword(''); setDomainFilter(''); setSpecialtyFilter(''); }} className="mt-2">
@@ -271,6 +283,93 @@ const SearchJobs: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Expanded Details Dialog */}
+      <Dialog open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">{selectedJob?.title || (selectedJob as any)?.titre}</DialogTitle>
+            <DialogDescription className="text-sm text-gray-500">
+              {selectedJob?.companyName || (selectedJob as any)?.societe?.nom || 'Company'} • {selectedJob?.createdAt ? new Date(selectedJob.createdAt).toLocaleDateString() : (selectedJob as any)?.datePublication ? new Date((selectedJob as any).datePublication).toLocaleDateString() : 'Recent'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 mt-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <Globe size={14} className="text-blue-600" />
+                  <span className="text-xs font-medium uppercase text-gray-500">Domain</span>
+                </div>
+                <p className="text-sm font-semibold">{selectedJob?.domain || (selectedJob as any)?.domaine}</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <Briefcase size={14} className="text-teal-600" />
+                  <span className="text-xs font-medium uppercase text-gray-500">Specialty</span>
+                </div>
+                <p className="text-sm font-semibold">{selectedJob?.specialty || (selectedJob as any)?.specialiteName || 'Not specified'}</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock size={14} className="text-amber-600" />
+                  <span className="text-xs font-medium uppercase text-gray-500">Type</span>
+                </div>
+                <p className="text-sm font-semibold">{selectedJob?.workMode || (selectedJob as any)?.type || 'On-site'}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                <Info size={18} />
+                Job Requirements & Details
+              </h3>
+              <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {selectedJob?.description || (selectedJob as any)?.description}
+                {((selectedJob?.description || (selectedJob as any)?.description) && (selectedJob?.contractType || selectedJob?.experienceLevel)) && '\n\n'}
+                {selectedJob?.contractType && <>Contract Type: <span className="font-bold text-gray-900 dark:text-white">{selectedJob.contractType}</span>{'\n'}</>}
+                {selectedJob?.experienceLevel && <>Experience Level: <span className="font-bold text-gray-900 dark:text-white">{selectedJob.experienceLevel}</span></>}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex flex-col justify-center gap-4">
+              {appliedJobIds.has(selectedJob?.id || (selectedJob as any)?._id) ? (
+                <div className="flex flex-col items-center">
+                   <div className="text-emerald-600 font-bold flex items-center justify-center gap-2 mb-2 p-3 bg-emerald-50 rounded-lg w-full">
+                     <CheckCircle size={20} /> You have already applied for this position
+                   </div>
+                </div>
+              ) : (
+                <>
+                  <div className="w-full max-w-sm mx-auto text-center border p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border-dashed">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                       Attach a custom CV for this job (optional)
+                    </label>
+                    <input 
+                      type="file" 
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-slate-800 dark:file:text-slate-300"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleApply} 
+                    disabled={applyingIndicator !== null}
+                    className="px-10 py-3 mx-auto w-1/2 text-base"
+                    style={{ background: 'linear-gradient(135deg, #0f3460 0%, #134e4a 100%)' }}
+                  >
+                    {applyingIndicator !== null ? (
+                      <><Loader2 className="animate-spin mr-2 h-4 w-4" /> Applying...</>
+                    ) : (
+                      'Apply Now'
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

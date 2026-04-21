@@ -294,36 +294,38 @@ const Index: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-6 lg:px-12">
-          <div className="bg-primary rounded-[2.5rem] p-8 md:p-16 text-primary-foreground relative overflow-hidden shadow-2xl shadow-primary/40">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full -ml-20 -mb-20 blur-3xl" />
-            
-            <div className="relative z-10 max-w-3xl mx-auto text-center">
-              <h2 className="font-heading text-4xl lg:text-5xl font-bold mb-6">
-                Ready to take the next step in your career?
-              </h2>
-              <p className="text-xl opacity-90 mb-10 max-w-2xl mx-auto">
-                Join 50,000+ professionals and 2,000+ companies already using HireFlow to build the future of work.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" variant="secondary" asChild className="h-14 px-10 rounded-full font-bold text-lg">
-                  <Link to="/register">Create Your Account</Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild className="h-14 px-10 rounded-full font-bold text-lg bg-transparent border-white/30 hover:bg-white/10">
-                  <Link to="/jobs">Explore All Jobs</Link>
-                </Button>
-              </div>
-              <div className="mt-10 flex items-center justify-center gap-6 text-sm opacity-80">
-                <span className="flex items-center gap-1.5"><CheckCircle2 size={16} /> No credit card required</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 size={16} /> Free for candidates</span>
+      {!user && (
+        <section className="py-20">
+          <div className="container mx-auto px-6 lg:px-12">
+            <div className="bg-primary rounded-[2.5rem] p-8 md:p-16 text-primary-foreground relative overflow-hidden shadow-2xl shadow-primary/40">
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full -ml-20 -mb-20 blur-3xl" />
+              
+              <div className="relative z-10 max-w-3xl mx-auto text-center">
+                <h2 className="font-heading text-4xl lg:text-5xl font-bold mb-6">
+                  Ready to take the next step in your career?
+                </h2>
+                <p className="text-xl opacity-90 mb-10 max-w-2xl mx-auto">
+                  Join 50,000+ professionals and 2,000+ companies already using HireFlow to build the future of work.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button size="lg" variant="secondary" asChild className="h-14 px-10 rounded-full font-bold text-lg">
+                    <Link to="/register">Create Your Account</Link>
+                  </Button>
+                  <Button size="lg" variant="outline" asChild className="h-14 px-10 rounded-full font-bold text-lg bg-transparent border-white/30 hover:bg-white/10">
+                    <Link to="/jobs">Explore All Jobs</Link>
+                  </Button>
+                </div>
+                <div className="mt-10 flex items-center justify-center gap-6 text-sm opacity-80">
+                  <span className="flex items-center gap-1.5"><CheckCircle2 size={16} /> No credit card required</span>
+                  <span className="flex items-center gap-1.5"><CheckCircle2 size={16} /> Free for candidates</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <Footer />
     </div>
