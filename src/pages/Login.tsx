@@ -24,7 +24,7 @@ const Login: React.FC = () => {
       const res = await authService.login({ email, password });
       login(res.user, res.token);
       
-      const path = res.user.role === 'company' ? '/company' : res.user.role === 'admin' ? '/admin' : '/candidate';
+      const path = res.user.role === 'company' ? '/company' : res.user.role === 'admin' ? '/admin' : '/jobs';
       navigate(path);
       toast({ title: 'Welcome back!', description: 'Successfully signed in.' });
     } catch (error: any) {

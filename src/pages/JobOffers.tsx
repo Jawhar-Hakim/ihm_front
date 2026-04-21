@@ -143,7 +143,7 @@ const JobOffers: React.FC = () => {
             </div>
           </div>
           {user && (
-            <Link to={`/${user.role}`}>
+            <Link to={user.role ==="candidate" ? "/candidate/profile":`/${user.role}`}>
               <Button variant="default" className="flex items-center gap-2">
                 <LayoutDashboard size={18} />
                 Dashboard

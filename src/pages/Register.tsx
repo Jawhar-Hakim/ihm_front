@@ -45,7 +45,7 @@ const Register: React.FC = () => {
 
       login(res.user, res.token);
       toast({ title: 'Account created!', description: `Welcome to HireFlow, ${res.user.email}` });
-      navigate(tab === 'company' ? '/company' : '/candidate');
+      navigate(tab === 'company' ? '/company' : '/jobs');
     } catch (error: any) {
       toast({ title: 'Error', description: error.message || 'Registration failed', variant: 'destructive' });
     } finally {
