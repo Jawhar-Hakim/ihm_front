@@ -42,7 +42,7 @@ const Index: React.FC = () => {
       ? "/company"
       : user?.role === "admin"
         ? "/admin"
-        : "/candidate";
+        : "/candidate/profile";
 
   const categories = [
     { icon: <Cpu className="w-6 h-6" />, name: "Technology", jobs: "1.2k+" },

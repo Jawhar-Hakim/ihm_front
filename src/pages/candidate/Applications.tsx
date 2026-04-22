@@ -5,9 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { candidatesService } from '@/services/candidates.service';
-import { Loader2, FileText, Bookmark, Clock, CheckCircle2, XCircle, Building2, MapPin, Calendar, ChevronRight } from 'lucide-react';
-import type { Application } from '@/types';
+import { jobsService } from '@/services/jobs.service';
+import { Loader2, FileText, Bookmark, Clock, CheckCircle2, XCircle, Building2, MapPin, Calendar, ChevronRight, Globe, Briefcase, Info, Search } from 'lucide-react';
+import type { Application, JobOffer } from '@/types';
 import { Link } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const STATUS_MAP: Record<string, { label: string; textColor: string; bgColor: string; border: string; icon: React.ReactNode }> = {
   'en attente': { label: 'Under Review', textColor: 'text-amber-700', bgColor: 'bg-amber-50', border: 'border-amber-200', icon: <Clock size={14} className="mr-1.5" /> },
@@ -24,6 +26,9 @@ const Applications: React.FC = () => {
   const { user } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
+  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -33,6 +38,19 @@ const Applications: React.FC = () => {
         .finally(() => setLoading(false));
     }
   }, [user]);
+
+  const handleViewDetails = async (app: Application) => {
+    setIsDetailLoading(true);
+    setSelectedApp(app);
+    try {
+      const jobDetails = await jobsService.getById(app.jobOfferId);
+      setSelectedJob(jobDetails);
+    } catch (err) {
+      console.error('Failed to fetch job details:', err);
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
 
   // Derived state
   const pendingApps = applications.filter(a => a.status === 'pending' || a.status === 'en attente');
@@ -44,7 +62,7 @@ const Applications: React.FC = () => {
     const companyInitial = app.companyName ? app.companyName.charAt(0).toUpperCase() : 'C';
     
     return (
-      <Card key={app.id} className="overflow-hidden hover:shadow-md transition-shadow duration-300 border-border/60">
+      <Card key={app.id} className="overflow-hidden hover:shadow-md transition-shadow duration-300 border-border/60 cursor-pointer" onClick={() => handleViewDetails(app)}>
         <CardContent className="p-0">
           <div className="p-5 sm:p-6 flex flex-col md:flex-row gap-5">
             {/* Logo placeholder */}
@@ -94,13 +112,26 @@ const Applications: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center w-full">
       {/* Hero Section */}
-      <div className="w-full bg-primary py-16 md:py-24 px-4 text-center text-primary-foreground flex flex-col items-center justify-center pt-24 pb-20">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-          Your <span className="text-amber-500">Applications</span> Journey
-        </h1>
-        <p className="text-lg md:text-xl text-primary-foreground/90 max-w-2xl mx-auto">
-          Keep an eye on how your current applications are holding up or review your saved jobs to plan your next move.
-        </p>
+      <div className="w-full bg-primary py-16 md:py-24 px-4 text-center text-primary-foreground flex flex-col items-center justify-center pt-24 pb-20 relative overflow-hidden">
+        <div className="relative z-10 flex flex-col items-center">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            Your <span className="text-amber-500">Applications</span> Journey
+          </h1>
+          <p className="text-lg md:text-xl text-primary-foreground/90 max-w-2xl mx-auto mb-8">
+            Keep an eye on how your current applications are holding up or review your saved jobs to plan your next move.
+          </p>
+          <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-full px-8 shadow-lg">
+            <Link to="/jobs" className="flex items-center gap-2">
+              <Search size={20} />
+              <span>Search More Jobs</span>
+            </Link>
+          </Button>
+        </div>
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+             <path d="M0,100 C30,80 70,80 100,100 L100,0 L0,0 Z" fill="currentColor" />
+           </svg>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -138,11 +169,7 @@ const Applications: React.FC = () => {
                       <Badge variant="secondary" className="ml-auto px-3 py-1 font-semibold text-sm bg-amber-50 text-amber-700 hover:bg-amber-100">{pendingApps.length} Active</Badge>
                     </div>
                     <div className="flex flex-col gap-4">
-                      {pendingApps.map((app) => (
-                        <Link to="/candidate/jobs" state={{ search: app.jobTitle }} key={app.id}>
-                          {renderApplicationCard(app)}
-                        </Link>
-                      ))}
+                      {pendingApps.map((app) => renderApplicationCard(app))}
                     </div>
                   </div>
                 )}
@@ -162,11 +189,7 @@ const Applications: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-4 opacity-95 hover:opacity-100 transition-opacity">
-                      {finishedApps.map((app) => (
-                        <Link to="/candidate/jobs" state={{ search: app.jobTitle }} key={app.id}>
-                          {renderApplicationCard(app)}
-                        </Link>
-                      ))}
+                      {finishedApps.map((app) => renderApplicationCard(app))}
                     </div>
                   </div>
                 )}
@@ -181,7 +204,7 @@ const Applications: React.FC = () => {
                   Your journey starts here. Use our search tool to find jobs that match your skills and passions.
                 </p>
                 <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-full px-8 h-12">
-                  <Link to="/candidate/jobs">Browse Jobs</Link>
+                  <Link to="/jobs">Browse Jobs</Link>
                 </Button>
               </div>
             )}
@@ -197,12 +220,107 @@ const Applications: React.FC = () => {
                 Keep track of interesting positions here. Save jobs to apply later.
               </p>
               <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-full px-8 h-12">
-                <Link to="/candidate/jobs">Explore Opportunities</Link>
+                <Link to="/jobs">Explore Opportunities</Link>
               </Button>
             </div>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Application Details Dialog */}
+      <Dialog open={!!selectedApp} onOpenChange={(open) => !open && (setSelectedApp(null), setSelectedJob(null))}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {isDetailLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading job details...</p>
+            </div>
+          ) : (
+            <>
+              <DialogHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <DialogTitle className="text-2xl font-bold mb-1">{selectedJob?.title || selectedApp?.jobTitle}</DialogTitle>
+                    <DialogDescription className="text-base text-muted-foreground flex items-center gap-2">
+                      <Building2 size={16} />
+                      {selectedJob?.companyName || selectedApp?.companyName}
+                    </DialogDescription>
+                  </div>
+                  {selectedApp && (
+                    <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_MAP[selectedApp.status.toLowerCase()]?.bgColor} ${STATUS_MAP[selectedApp.status.toLowerCase()]?.textColor} ${STATUS_MAP[selectedApp.status.toLowerCase()]?.border}`}>
+                      {STATUS_MAP[selectedApp.status.toLowerCase()]?.label}
+                    </div>
+                  )}
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-6 mt-6">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="bg-muted/50 p-4 rounded-xl border border-border/50">
+                    <div className="flex items-center gap-2 mb-2 text-blue-600">
+                      <Globe size={16} />
+                      <span className="text-xs font-bold uppercase tracking-wider opacity-70">Domain</span>
+                    </div>
+                    <p className="font-semibold">{selectedJob?.domain || 'Not specified'}</p>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-xl border border-border/50">
+                    <div className="flex items-center gap-2 mb-2 text-teal-600">
+                      <Briefcase size={16} />
+                      <span className="text-xs font-bold uppercase tracking-wider opacity-70">Type</span>
+                    </div>
+                    <p className="font-semibold">{selectedJob?.contractType || selectedJob?.workMode || 'Full-time'}</p>
+                  </div>
+                  <div className="bg-muted/50 p-4 rounded-xl border border-border/50">
+                    <div className="flex items-center gap-2 mb-2 text-amber-600">
+                      <Calendar size={16} />
+                      <span className="text-xs font-bold uppercase tracking-wider opacity-70">Applied On</span>
+                    </div>
+                    <p className="font-semibold">{selectedApp ? new Date(selectedApp.submittedAt).toLocaleDateString() : 'N/A'}</p>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <Info size={20} className="text-primary" />
+                    Job Description
+                  </h3>
+                  <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap bg-muted/20 p-4 rounded-xl border border-border/40">
+                    {selectedJob?.description || 'No description provided.'}
+                    {selectedJob?.responsibilities && (
+                      <>
+                        <h4 className="font-bold text-foreground mt-4 mb-2">Responsibilities:</h4>
+                        {selectedJob.responsibilities}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Application Meta */}
+                <div className="pt-6 border-t border-border flex flex-col gap-4">
+                  <div className="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/10">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+                        <FileText size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold">Your Application Status</p>
+                        <p className="text-xs text-muted-foreground">Submitted on {selectedApp && new Date(selectedApp.submittedAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                       <p className={`text-sm font-bold ${STATUS_MAP[selectedApp?.status.toLowerCase() || 'pending']?.textColor}`}>
+                         {STATUS_MAP[selectedApp?.status.toLowerCase() || 'pending']?.label}
+                       </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

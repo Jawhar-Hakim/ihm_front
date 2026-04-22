@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { candidatesService } from '@/services/candidates.service';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, FileText, User, MapPin, GraduationCap, Briefcase, Link as LinkIcon, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Save, FileText, User, MapPin, GraduationCap, Briefcase, Link as LinkIcon, Plus, Trash2, Search } from 'lucide-react';
 import type { Candidate } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 
 const CandidateProfile: React.FC = () => {
   const { user } = useAuth();
@@ -129,17 +130,19 @@ const CandidateProfile: React.FC = () => {
            <svg className="absolute w-full h-full opacity-30 right-[-10%] bottom-[-20%] pointer-events-none scale-150 rotate-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="currentColor" fillOpacity="1" d="M0,192L48,208C96,224,192,256,288,256C384,256,480,224,576,202.7C672,181,768,171,864,181.3C960,192,1056,224,1152,218.7C1248,213,1344,171,1392,149.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>
         </div>
         
-        {/* Avatar */}
-        <div className="absolute -bottom-12 left-8 md:left-12 flex items-end space-x-6">
-          <div className="h-28 w-28 sm:h-32 sm:w-32 bg-card rounded-full border-4 border-background shadow-md flex items-center justify-center text-4xl text-primary font-bold overflow-hidden ring-4 ring-background z-10">
-             {profile.firstName ? profile.firstName.charAt(0).toUpperCase() : <User size={48} />}
+        <div className="absolute -bottom-12 left-8 md:left-12 flex items-end justify-between w-[calc(100%-4rem)] md:w-[calc(100%-6rem)]">
+          <div className="flex items-end space-x-6">
+            <div className="h-28 w-28 sm:h-32 sm:w-32 bg-card rounded-full border-4 border-background shadow-md flex items-center justify-center text-4xl text-primary font-bold overflow-hidden ring-4 ring-background z-10">
+               {profile.firstName ? profile.firstName.charAt(0).toUpperCase() : <User size={48} />}
+            </div>
+            <div className="pb-2 hidden sm:block z-10 bg-background/50 backdrop-blur-sm px-4 py-1 rounded-full border">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                {profile.firstName ? `${profile.firstName} ${profile.lastName}` : 'Your Profile'}
+              </h1>
+              <p className="text-muted-foreground">{profile.category || 'Build your amazing profile'}</p>
+            </div>
           </div>
-          <div className="pb-2 hidden sm:block z-10 bg-background/50 backdrop-blur-sm px-4 py-1 rounded-full border">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {profile.firstName ? `${profile.firstName} ${profile.lastName}` : 'Your Profile'}
-            </h1>
-            <p className="text-muted-foreground">{profile.category || 'Build your amazing profile'}</p>
-          </div>
+          
         </div>
       </div>
 

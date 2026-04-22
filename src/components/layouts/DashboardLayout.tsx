@@ -38,10 +38,21 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </div>
 
           <div className="flex flex-1 items-center justify-end gap-4 space-x-2 sm:space-x-4">
-            {(user?.role === 'company' || user?.role === 'candidate') && (
+            {user?.role === 'candidate' && (
+              <div className="hidden md:flex items-center">
+                <Button size="sm" variant="default" asChild className="rounded-full shadow-sm bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-5">
+                  <Link to="/jobs" className="flex items-center gap-2">
+                    <Search size={16} />
+                    <span className="text-xs uppercase tracking-wider">Search Jobs</span>
+                  </Link>
+                </Button>
+              </div>
+            )}
+
+            {user?.role === 'company' && (
               <div className="hidden md:flex items-center">
                 <Button size="sm" variant="default" asChild className="rounded-full shadow-sm bg-primary hover:bg-primary/90">
-                  <Link to={`/${user.role}`} className="flex items-center gap-1.5">
+                  <Link to="/company" className="flex items-center gap-1.5">
                     <LayoutDashboard size={16} />
                     <span className="text-xs font-bold uppercase tracking-wider">Dashboard</span>
                   </Link>
